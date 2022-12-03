@@ -1,4 +1,4 @@
-enum class Moves(val score: Int) {
+enum class GameMove(val score: Int) {
     ROCK(1),
     PAPER(2),
     SCISSORS(3);
@@ -12,34 +12,72 @@ enum class GameResult(val score: Int) {
 
 fun main() {
 
-    fun mapRawToTokens(rawInput: String): Moves {
+    fun mapElfMove(rawInput: String): GameMove {
         return when (rawInput) {
-            "A", "X" -> Moves.ROCK
-            "B", "Y" -> Moves.PAPER
-            "C", "Z" -> Moves.SCISSORS
+            "A" -> GameMove.ROCK
+            "B" -> GameMove.PAPER
+            "C" -> GameMove.SCISSORS
             else -> {
                 throw Exception("Invalid state")
             }
         }
     }
 
-    fun resolveIfPlayerWon(playerMove: Moves, elfMove: Moves): GameResult {
+    fun mapPlayerMove(rawInput: String): GameMove {
+        return when (rawInput) {
+            "X" -> GameMove.ROCK
+            "Y" -> GameMove.PAPER
+            "Z" -> GameMove.SCISSORS
+            else -> {
+                throw Exception("Invalid state")
+            }
+        }
+    }
+
+    fun mapExpectedResult(rawInput: String): GameResult {
+        return when (rawInput) {
+            "X" -> GameResult.ELF_WON
+            "Y" -> GameResult.TIE
+            "Z" -> GameResult.PLAYER_WON
+            else -> {
+                throw Exception("Invalid state")
+            }
+        }
+    }
+
+    fun resolveGameResult(elfMove: GameMove, playerMove: GameMove): GameResult {
         return when (playerMove) {
             elfMove -> GameResult.TIE
-            Moves.ROCK -> if (elfMove != Moves.PAPER) GameResult.PLAYER_WON else GameResult.ELF_WON
-            Moves.PAPER -> if (elfMove != Moves.SCISSORS) GameResult.PLAYER_WON else GameResult.ELF_WON
-            Moves.SCISSORS -> if (elfMove != Moves.ROCK) GameResult.PLAYER_WON else GameResult.ELF_WON
+            GameMove.ROCK -> if (elfMove != GameMove.PAPER) GameResult.PLAYER_WON else GameResult.ELF_WON
+            GameMove.PAPER -> if (elfMove != GameMove.SCISSORS) GameResult.PLAYER_WON else GameResult.ELF_WON
+            GameMove.SCISSORS -> if (elfMove != GameMove.ROCK) GameResult.PLAYER_WON else GameResult.ELF_WON
+        }
+    }
+
+    fun resolvePlayerMove(elfMove: GameMove, expectedResult: GameResult): GameMove {
+        return when (expectedResult) {
+            GameResult.PLAYER_WON -> when (elfMove) {
+                GameMove.PAPER -> GameMove.SCISSORS
+                GameMove.ROCK -> GameMove.PAPER
+                GameMove.SCISSORS -> GameMove.ROCK
+            }
+            GameResult.ELF_WON -> when (elfMove) {
+                GameMove.PAPER -> GameMove.ROCK
+                GameMove.ROCK -> GameMove.SCISSORS
+                GameMove.SCISSORS -> GameMove.PAPER
+            }
+            GameResult.TIE -> elfMove
         }
     }
 
     fun part1(input: List<String>): Int {
         var score = 0
         input.forEach {
-            val moves = it.split(" ").map(::mapRawToTokens)
-            val elfMove = moves[0]
-            val playerMove = moves[1]
+            val moves = it.split(" ")
+            val elfMove = mapElfMove(moves[0])
+            val playerMove = mapPlayerMove(moves[1])
 
-            val gameResult = resolveIfPlayerWon(playerMove, elfMove)
+            val gameResult = resolveGameResult(elfMove, playerMove)
 
             score += playerMove.score + gameResult.score
         }
@@ -47,7 +85,17 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return input.size
+        var score = 0
+        input.forEach {
+            val moves = it.split(" ")
+            val elfMove = mapElfMove(moves[0])
+            val expectedResult = mapExpectedResult(moves[1])
+
+            val playerMove = resolvePlayerMove(elfMove, expectedResult)
+
+            score += expectedResult.score + playerMove.score
+        }
+        return score
     }
 
     // test if implementation meets criteria from the description, like:
