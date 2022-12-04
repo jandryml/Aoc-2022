@@ -4,30 +4,27 @@ private enum class GameMove(val score: Int) {
     ROCK(1),
     PAPER(2),
     SCISSORS(3);
-}
 
-private enum class GameResult(val score: Int) {
-    PLAYER_WON(6),
-    TIE(3),
-    ELF_WON(0)
-}
-
-private fun mapElfMove(rawInput: String): GameMove {
-    return when (rawInput) {
-        "A" -> GameMove.ROCK
-        "B" -> GameMove.PAPER
-        "C" -> GameMove.SCISSORS
-        else -> {
-            throw InvalidParameterException()
-        }
+    fun evaluateGameResult(otherPlayerMove: GameMove): GameResult = when {
+        this == otherPlayerMove -> GameResult.TIE
+        this == ROCK && otherPlayerMove == SCISSORS -> GameResult.WIN
+        this == SCISSORS && otherPlayerMove == PAPER -> GameResult.WIN
+        this == PAPER && otherPlayerMove == ROCK -> GameResult.WIN
+        else -> GameResult.LOSE
     }
 }
 
-private fun mapPlayerMove(rawInput: String): GameMove {
+private enum class GameResult(val score: Int) {
+    WIN(6),
+    TIE(3),
+    LOSE(0);
+}
+
+private fun mapGameMove(rawInput: String): GameMove {
     return when (rawInput) {
-        "X" -> GameMove.ROCK
-        "Y" -> GameMove.PAPER
-        "Z" -> GameMove.SCISSORS
+        "A", "X" -> GameMove.ROCK
+        "B", "Y" -> GameMove.PAPER
+        "C", "Z" -> GameMove.SCISSORS
         else -> {
             throw InvalidParameterException()
         }
@@ -36,39 +33,28 @@ private fun mapPlayerMove(rawInput: String): GameMove {
 
 private fun mapExpectedResult(rawInput: String): GameResult {
     return when (rawInput) {
-        "X" -> GameResult.ELF_WON
+        "X" -> GameResult.LOSE
         "Y" -> GameResult.TIE
-        "Z" -> GameResult.PLAYER_WON
+        "Z" -> GameResult.WIN
         else -> {
             throw InvalidParameterException()
         }
     }
 }
 
-private fun mapPlayerWin(havePlayerWon: Boolean) = if (havePlayerWon) GameResult.PLAYER_WON else GameResult.ELF_WON
-
-private fun resolveGameResult(elfMove: GameMove, playerMove: GameMove): GameResult {
-    return when (playerMove) {
-        elfMove -> GameResult.TIE
-        GameMove.ROCK -> mapPlayerWin(elfMove != GameMove.PAPER)
-        GameMove.PAPER -> mapPlayerWin(elfMove != GameMove.SCISSORS)
-        GameMove.SCISSORS -> mapPlayerWin(elfMove != GameMove.ROCK)
-    }
-}
-
-private fun resolvePlayerMove(elfMove: GameMove, expectedResult: GameResult): GameMove {
+private fun resolvePlayerMove(otherPlayerMove: GameMove, expectedResult: GameResult): GameMove {
     return when (expectedResult) {
-        GameResult.PLAYER_WON -> when (elfMove) {
+        GameResult.WIN -> when (otherPlayerMove) {
             GameMove.PAPER -> GameMove.SCISSORS
             GameMove.ROCK -> GameMove.PAPER
             GameMove.SCISSORS -> GameMove.ROCK
         }
-        GameResult.ELF_WON -> when (elfMove) {
+        GameResult.LOSE -> when (otherPlayerMove) {
             GameMove.PAPER -> GameMove.ROCK
             GameMove.ROCK -> GameMove.SCISSORS
             GameMove.SCISSORS -> GameMove.PAPER
         }
-        GameResult.TIE -> elfMove
+        GameResult.TIE -> otherPlayerMove
     }
 }
 
@@ -82,8 +68,8 @@ private fun calculateScore(input: List<String>, resolveRoundScore: (List<String>
 
 private fun part1(input: List<String>): Int {
     return calculateScore(input) {
-        val playerMove = mapPlayerMove(it[1])
-        val gameResult = resolveGameResult(mapElfMove(it[0]), playerMove)
+        val playerMove = mapGameMove(it[1])
+        val gameResult = playerMove.evaluateGameResult(mapGameMove(it[0]))
 
         playerMove.score + gameResult.score
     }
@@ -92,7 +78,7 @@ private fun part1(input: List<String>): Int {
 private fun part2(input: List<String>): Int {
     return calculateScore(input) {
         val expectedResult = mapExpectedResult(it[1])
-        val playerMove = resolvePlayerMove(mapElfMove(it[0]), expectedResult)
+        val playerMove = resolvePlayerMove(mapGameMove(it[0]), expectedResult)
 
         expectedResult.score + playerMove.score
     }
