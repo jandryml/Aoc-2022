@@ -1,35 +1,22 @@
 private fun part1(input: List<String>): Int {
-    return findIntersectItemsAndCalculatePriority(
-        input.asSequence()
-            .map { it.chunked(it.length / 2).map { it.toCharArray() } }
-    )
+    return input.asSequence()
+        .map { it.chunked(it.length / 2) }
+        .map { (a, b) -> a.find { it in b } }
+        .sumOf { it?.toPriority() ?: 0 }
 }
 
 private fun part2(input: List<String>): Int {
-    return findIntersectItemsAndCalculatePriority(
-        input.chunked(3).asSequence()
-            .map { it.map { it.toCharArray() } }
-    )
+    return input.chunked(3)
+        .map { (a, b, c) -> a.find { it in b && it in c } }
+        .sumOf { it?.toPriority() ?: 0 }
 }
 
-private fun findIntersectItemsAndCalculatePriority(sequence: Sequence<List<CharArray>>): Int {
-    return sequence.map { findIntersectItems(it) }
-        .map { it[0] } // we know that only one common item is present
-        .map {
-            return@map mapCharToInt(it)
-        }.sum()
-}
-
-private fun findIntersectItems(it: List<CharArray>) =
-    it.reduce { acc, chars -> acc.intersect(chars.asIterable().toSet()).toCharArray() }
-
-private fun mapCharToInt(character: Char): Int {
-    if (character in 'A'..'Z')
-        return character - 'A' + 27
-    if (character in 'a'..'z')
-        return character - 'a' + 1
-    throw Exception("Invalid char")
-}
+private fun Char.toPriority() =
+    when (this) {
+        in 'A'..'Z' -> this - 'A' + 27
+        in 'a'..'z' -> this - 'a' + 1
+        else -> throw Exception("Invalid char")
+    }
 
 fun main() {
     // test if implementation meets criteria from the description, like:
